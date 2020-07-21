@@ -13,7 +13,13 @@ if (!(Test-Path -Path "$NuGetPath\nuget.exe")) {
 }
 
 # find the current published version
-$pver = [version](Find-Module DotEnv | Select-Object -expand version)
+try {
+    
+    $pver = [version](Find-Module DotEnv | Select-Object -expand version)
+}
+catch {
+    $pver = [version]"0.0.0.0"
+}
 
 # find the current manifest version
 $mver = (Import-PowerShellDataFile .\Module\DotEnv\DotEnv.psd1).ModuleVersion

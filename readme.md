@@ -1,6 +1,6 @@
 # DotEnv
 
-A simple PowerShell module enabling loading of `.env` files into a PowerShell session. Takes inspiration from the node norm of [env files](https://www.freecodecamp.org/news/nodejs-custom-env-files-in-your-apps-fa7b3e67abe1/). It sinply picks up your key value pairs from `.env`, and loads them into transient environment variables. They can be optionally cleaned up at the end of the session, or the session can just be destroyed.
+A simple PowerShell module enabling loading of `.env` files into a PowerShell session. Takes inspiration from the node norm of [env files](https://www.freecodecamp.org/news/nodejs-custom-env-files-in-your-apps-fa7b3e67abe1/). It simply picks up your key value pairs from `.env`, and loads them into transient environment variables. They can be optionally cleaned up at the end of the session, or the session can just be destroyed.
 
 ## How To Use
 
