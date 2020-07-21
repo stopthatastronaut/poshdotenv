@@ -14,7 +14,6 @@ if (!(Test-Path -Path "$NuGetPath\nuget.exe")) {
 
 # find the current published version
 try {
-    
     $pver = [version](Find-Module DotEnv | Select-Object -expand version)
 }
 catch {
