@@ -1,0 +1,26 @@
+version: 2.1
+jobs:
+  test:
+    executor: windows-tools/default
+    steps:
+      - checkout
+      - run: systeminfo
+      - run:
+          name: "Invoke-Pester"
+          shell: powershell.exe -ExecutionPolicy Bypass
+          command: |
+            $PSVersionTable
+            Install-Module pester -force
+            Invoke-Pester -EnableExit
+workflows:
+  version: 2
+  pipeline:
+    jobs:
+      - test:
+          filters:
+            tags:
+              only: /.*/
+            branches:
+              only: /.*/
+orbs:
+  windows-tools: circleci/windows@2.2.0

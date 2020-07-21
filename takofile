@@ -1,0 +1,11 @@
+---
+Server: https://deploy.d.evops.co/
+Project: PoshDotEnv
+Mappings:
+  - 
+    Branch: master
+    Environment: Production
+  - 
+    Branch: develop
+    Environment: DevTest
+CreateRelease: true
