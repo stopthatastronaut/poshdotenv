@@ -4,14 +4,12 @@
 
  .Description
   Searches for local .env files and a load the defined environment variables
-  into the current environement.
+  into the current environement. The search for environemnt files can also
+  be done recursively across all parent directories.
   
   Already existing variables are only overwritten when the `-Force` parameter
   is given.
   
-  In addition a   
-
-
  .Parameter Name
   The filename to look for. can be relative or absolute.
   If a relative path is given, the file name can be looked
@@ -25,6 +23,9 @@
   (e.g. differentiate between run-time locations or between dev and prod
   environment).
 
+  With this communale settings can be kept in the default file and only
+  the ones that differ need to be put into the respective second file.
+
   If provided the 'env' value will be used to search for additional
   environment files that take precedence over the settings in the default
   file.
@@ -36,7 +37,7 @@
  .Parameter up
   The `.env` files are searched for from the current working directory up.
 
-  Precedence is: the furhter up a file is, the lower the precedence of the
+  Precedence is: the further up a file is, the lower the precedence of the
   variables defined there. E.g. `./.env` will overwrite variables defined
   in `../.env`.
 
