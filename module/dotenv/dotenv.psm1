@@ -162,7 +162,7 @@ Function Set-DotEnv {
                             if ( -not $dotenv_added_vars.ContainsKey($key) ) {
                                 Write-Verbose "Saving env variable '$key=$value'"
                                 $value_old = [System.Environment]::GetEnvironmentVariable($key)
-                                $dotenv_overwritte_vars += @{$key = $value_old}
+                                $dotenv_overwritte_vars[$key] = $value_old
                             }
                         }
 
