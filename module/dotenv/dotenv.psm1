@@ -35,13 +35,10 @@
   Optional, default : disabled
 
  .Parameter up
-  The `.env` files are searched for from the current working directory up.
+  The `.env` files are searched for from the current working directory up until
+  one is found. Then the search is aborted.
 
-  Precedence is: the further up a file is, the lower the precedence of the
-  variables defined there. E.g. `./.env` will overwrite variables defined
-  in `../.env`.
-
-  Again here: within a directory level, the `.env.<env>` files takes precedence
+  Again: within a directory level, the `.env.<env>` files takes precedence
   over the default `.env` file.
   
  .Parameter returnvars
@@ -96,6 +93,9 @@ Function Set-DotEnv {
         # no hierarchical search if absolute env name is given
         if (-not $up -or $isNameAbsolute ) { break }
 
+        # found something, stop searching
+        if ( $fileslist.Count -ne 0 ) { break }
+
         $dir = Split-Path $dir -Parent
     } while ($dir -ne "")
 
@@ -139,36 +139,40 @@ Function Set-DotEnv {
 
                     $key = $line.Substring(0, $eq).trim()
                     $value = $line.substring($fq, $line.Length - $fq).trim()
-                    Write-Verbose "Found $key with value $value"
+                    Write-Verbose "Found '$key' with value '$value'"
 
                     if ($value -match "`'|`"") {
                         Write-Verbose "`tQuoted value found, trimming quotes"
                         $value = $value.trim('"').trim("'")
-                        Write-Verbose "`tValue is now $value"
+                        Write-Verbose "`tValue is now '$value'"
                     }
 
-                    # if env not already set or force is given
-                    if ( -not ( Test-Path env:\$key ) -or $force) {
+                    # if set by previous env file, remove  ...
+                    if ( $dotenv_added_vars.ContainsKey($key) ) {
+                        Write-Verbose "Overwriting already set DotEnv '$key' with value '$value'"
+                        # overwrite because new content comes from a different .env.<> file
+                        [System.Environment]::SetEnvironmentVariable($key, $value)
+                        $dotenv_added_vars[$key] = $value 
+                    }
+                    elseif ( -not ( Test-Path env:\$key ) -or $force) {
+                        # if env not already set or force is given
 
                         if ( Test-Path env:\$key ) {
                             # save only orignal value == when overwritte the first time
                             if ( -not $dotenv_added_vars.ContainsKey($key) ) {
+                                Write-Verbose "Saving env variable '$key=$value'"
                                 $value_old = [System.Environment]::GetEnvironmentVariable($key)
                                 $dotenv_overwritte_vars += @{$key = $value_old}
                             }
                         }
 
+                        Write-Verbose "Setting DotEnv '$key' with value '$value'"
                         [System.Environment]::SetEnvironmentVariable($key, $value)
-                       
-                        # if set by previous env file, remove  ...
-                        if ( $dotenv_added_vars.ContainsKey($key) ) {
-                            $dotenv_added_vars.Remove($key)
-                        }
-                        # ... and add new value
-                        $dotenv_added_vars += @{$key = $value }
+                        # set add new value
+                        $dotenv_added_vars[$key] = $value 
                     } 
                     else {
-                        Write-Verbose "ignore $key, already set"
+                        Write-Verbose "ignore '$key', already set in original environment"
                     }
                 }
             }
@@ -189,7 +193,7 @@ Function Set-DotEnv {
 
 <#
 .SYNOPSIS
-Remove-DotEnv removes environment variabels previously loaded by Set-DotEnv.
+Function Remove-DotEnv removes environment variabels previously loaded by Set-DotEnv.
 #>
 Function Remove-DotEnv {
     [CmdletBinding(SupportsShouldProcess = $true)]
