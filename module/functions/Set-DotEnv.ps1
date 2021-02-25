@@ -6,10 +6,10 @@
   Searches for local .env files and a load the defined environment variables
   into the current environement. The search for environemnt files can also
   be done recursively across all parent directories.
-  
+
   Already existing variables are only overwritten when the `-Force` parameter
   is given.
-  
+
  .Parameter Name
   The filename to look for. can be relative or absolute.
   If a relative path is given, the file name can be looked
@@ -29,7 +29,7 @@
   If provided the 'env' value will be used to search for additional
   environment files that take precedence over the settings in the default
   file.
-  
+
   E.g: `-env dev` searches also for `.env.dev`
 
   Optional, default : disabled
@@ -40,31 +40,31 @@
 
   Again: within a directory level, the `.env.<env>` files takes precedence
   over the default `.env` file.
-  
- .Parameter returnvars
-  returns the added and overwritten environment variables with their values.
-  This can be used to completely restore the original environment 
 
- .Parameter force
-  Already existing environment variables will be overwritten. Default is to 
+ .Parameter PassThru
+  returns the added and overwritten environment variables with their values.
+  This can be used to completely restore the original environment
+
+ .Parameter Force
+  Already existing environment variables will be overwritten. Default is to
   keep the values of existing variables.
 
  .Example
    # search all
-   PS> Set-DotEnv -force -name localenv -env dev -up
+   PS> Set-DotEnv -Force -name localenv -env dev -up
 
  .Link
   Restore-DotEnv
 #>
-Function Set-DotEnv {
+function Set-DotEnv {
     [CmdletBinding(SupportsShouldProcess = $true)]
     [OutputType([System.Object[]])]
     param(
         [string]$name = '.env',
         [string]$env = '',
         [switch]$up,
-        [switch]$returnvars,
-        [switch]$force
+        [switch]$PassThru,
+        [switch]$Force
     )
     # location / environment specific file
     $nameenv = "$name.$env"
@@ -79,14 +79,14 @@ Function Set-DotEnv {
     do {
         if ( $env -ne "") {
             $fullnameenv = if ($isNameAbsolute) { $nameenv } Else { Join-Path $dir $nameenv }
-            if (Test-Path $fullnameenv)  {
-                $fileslist = ,$fullnameenv + $fileslist
+            if (Test-Path $fullnameenv) {
+                $fileslist = , $fullnameenv + $fileslist
             }
         }
 
-        $fullname = if ($isNameAbsolute) {  $name } Else { Join-Path $dir $name }
-        if (Test-Path $fullname)  {
-            $fileslist = ,$fullname + $fileslist
+        $fullname = if ($isNameAbsolute) { $name } Else { Join-Path $dir $name }
+        if (Test-Path $fullname) {
+            $fileslist = , $fullname + $fileslist
         }
 
         # exit if not search up
@@ -99,13 +99,13 @@ Function Set-DotEnv {
         $dir = Split-Path $dir -Parent
     } while ($dir -ne "")
 
-    if (  $fileslist.Count -eq 0 )  { 
+    if (  $fileslist.Count -eq 0 ) {
         Write-Verbose "no env file found"
     }
     else {
         $count = $fileslist.Count
-        Write-Verbose "found $count env files:" 
-        $fileslist | foreach-object { Write-Verbose "`t$_" }
+        Write-Verbose "found $count env files:"
+        $fileslist | ForEach-Object { Write-Verbose "`t$_" }
     }
 
     foreach ( $file in $fileslist) {
@@ -133,7 +133,7 @@ Function Set-DotEnv {
 
                 if ( $eq -eq -1) {
                     Write-Error "File $file : NO assignment operator in line $linecursor. Syntax correct?"
-                } 
+                }
                 else {
                     #Write-Verbose "Found an assignment operator at position $eq in a string of length $ln on line $linecursor"
 
@@ -152,10 +152,10 @@ Function Set-DotEnv {
                         Write-Verbose "Overwriting already set DotEnv '$key' with value '$value'"
                         # overwrite because new content comes from a different .env.<> file
                         [System.Environment]::SetEnvironmentVariable($key, $value)
-                        $dotenv_added_vars[$key] = $value 
+                        $dotenv_added_vars[$key] = $value
                     }
-                    elseif ( -not ( Test-Path env:\$key ) -or $force) {
-                        # if env not already set or force is given
+                    elseif ( -not ( Test-Path env:\$key ) -or $Force) {
+                        # if env not already set or Force is given
 
                         if ( Test-Path env:\$key ) {
                             # save only orignal value == when overwritte the first time
@@ -169,8 +169,8 @@ Function Set-DotEnv {
                         Write-Verbose "Setting DotEnv '$key' with value '$value'"
                         [System.Environment]::SetEnvironmentVariable($key, $value)
                         # set add new value
-                        $dotenv_added_vars[$key] = $value 
-                    } 
+                        $dotenv_added_vars[$key] = $value
+                    }
                     else {
                         Write-Verbose "ignore '$key', already set in original environment"
                     }
@@ -183,58 +183,10 @@ Function Set-DotEnv {
     $env:dotenv_overwritten_vars = ($dotenv_overwritte_vars.keys -join (","))
     $env:dotenv_added_vars = ($dotenv_added_vars.keys -join (","))
 
-    if ($returnvars) {
-        Write-Verbose "returnvars was specified, returning the array of found vars"
-        return @{ added      = $dotenv_added_vars
-                  overwritten= $dotenv_overwritte_vars
-                }
+    if ($PassThru) {
+        Write-Verbose "PassThru was specified, returning the array of found vars"
+        return @{ added = $dotenv_added_vars
+            overwritten = $dotenv_overwritte_vars
+        }
     }
 }
-
-<#
-.SYNOPSIS
-Function Remove-DotEnv removes environment variabels previously loaded by Set-DotEnv.
-#>
-Function Remove-DotEnv {
-    [CmdletBinding(SupportsShouldProcess = $true)]
-    param()
-
-    Write-Verbose "Removing env vars"
-
-    $addedvars = $env:dotnetenv_added_vars
-    $addedvars.split(",") | ForEach-Object {
-        Remove-Item "ENV:/$_" -ErrorAction SilentlyContinue
-    }
-
-    Remove-item "ENV:/dotenv_added_vars" -ErrorAction SilentlyContinue
-    Remove-item "ENV:/dotenv_overwritten_vars" -ErrorAction SilentlyContinue
-}
-
-<#
-.SYNOPSIS
-Restore-DotEnv removes environment variables previously loaded by Set-DotEnv 
-AND restores overwritten ones. Needs as input the return value from `Set-DotEnv -returnvars`.
-#>
-Function Restore-DotEnv {
-    [CmdletBinding(SupportsShouldProcess = $true)]
-    param(
-        [Parameter(Mandatory=$true)]
-        [Hashtable]$returnvars
-    )
-
-    Write-Verbose "Removing updated env vars"
-    $returnvars.added.keys | Foreach-Object { 
-        Remove-Item "ENV:/$_" -ErrorAction SilentlyContinue 
-    }
-    Write-Verbose "Restore overwritten env vars"
-    $returnvars.overwritten.GetEnumerator() | Foreach-Object { 
-       [System.Environment]::SetEnvironmentVariable($_.Name, $_.Value)
-    }
-
-    Remove-item "ENV:/dotenv_added_vars" -ErrorAction SilentlyContinue
-    Remove-item "ENV:/dotenv_overwritten_vars" -ErrorAction SilentlyContinue
-
-}
-
-Export-ModuleMember @('Set-DotEnv', 'Remove-DotEnv', 'Restore-DotEnv')
-
