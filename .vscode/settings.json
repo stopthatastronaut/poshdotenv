@@ -1,0 +1,6 @@
+{
+    "editor.formatOnSave": true,
+    "[powershell]": {
+        "files.trimTrailingWhitespace": true
+    }
+}
