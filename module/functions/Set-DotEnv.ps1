@@ -18,7 +18,7 @@
 
   Optional, default : '.env'
 
- .Parameter env
+ .Parameter Environment
   This parameter can be used to define different execution environements
   (e.g. differentiate between run-time locations or between dev and prod
   environment).
@@ -30,7 +30,7 @@
   environment files that take precedence over the settings in the default
   file.
 
-  E.g: `-env dev` searches also for `.env.dev`
+  E.g: `-Environment dev` searches also for `.env.dev`
 
   Optional, default : disabled
 
@@ -51,7 +51,7 @@
 
  .Example
    # search all
-   PS> Set-DotEnv -Force -name localenv -env dev -up
+   PS> Set-DotEnv -Force -name localenv -Environment dev -up
 
  .Link
   Restore-DotEnv
@@ -60,31 +60,37 @@ function Set-DotEnv {
     [CmdletBinding(SupportsShouldProcess = $true)]
     [OutputType([System.Object[]])]
     param(
-        [string]$name = '.env',
-        [string]$env = '',
+        [string]$Path,
+        [string]$Environment,
         [switch]$up,
         [switch]$PassThru,
         [switch]$Force
     )
+
+    if (-not $Path) {
+        $Path = Get-ChildItem -Filter '.env'
+    }
+    else {
+        $Path = Resolve-Path $Path
+    }
+
     # location / environment specific file
-    $nameenv = "$name.$env"
-    $isNameAbsolute = [System.IO.Path]::IsPathRooted($name)
+    $nameenv = "$Path.$Environment"
 
     $dotenv_added_vars = @{}      # a special var that tells us what we added
     $dotenv_overwritte_vars = @{} # a special var that tells us what we've overwritten
 
     $fileslist = @()
 
-    $dir = ( Get-Location | Select-Object -ExpandProperty Path )
     do {
-        if ( $env -ne "") {
-            $fullnameenv = if ($isNameAbsolute) { $nameenv } Else { Join-Path $dir $nameenv }
+        if ( $Environment -ne "") {
+            $fullnameenv = Resolve-Path $nameenv
             if (Test-Path $fullnameenv) {
                 $fileslist = , $fullnameenv + $fileslist
             }
         }
 
-        $fullname = if ($isNameAbsolute) { $name } Else { Join-Path $dir $name }
+        $fullname = Resolve-Path $Path
         if (Test-Path $fullname) {
             $fileslist = , $fullname + $fileslist
         }
@@ -141,6 +147,10 @@ function Set-DotEnv {
                     $value = $line.substring($fq, $line.Length - $fq).trim()
                     Write-Verbose "Found '$key' with value '$value'"
 
+                    if ($value -like '"*"') {
+                        Write-Verbose "Value is doulbe quoted - expanding newlines"
+                        $value = $value -replace '(?<!\\)(\\n)', "`n"
+                    }
                     if ($value -match "`'|`"") {
                         Write-Verbose "`tQuoted value found, trimming quotes"
                         $value = $value.trim('"').trim("'")
@@ -185,8 +195,8 @@ function Set-DotEnv {
 
     if ($PassThru) {
         Write-Verbose "PassThru was specified, returning the array of found vars"
-        return @{ added = $dotenv_added_vars
-            overwritten = $dotenv_overwritte_vars
+        return [PSCustomObject]@{ Added = $dotenv_added_vars
+            Overwritten                 = $dotenv_overwritte_vars
         }
     }
 }
