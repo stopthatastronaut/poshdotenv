@@ -94,12 +94,32 @@ Describe 'Set-DotEnv' {
         }
     }
     Context 'Given a specific environment is specified with the -Environment parameter' {
+        BeforeAll {
+            Push-Location TestDrive:\
+        }
         It 'gives precedence to environment-specific .env files (e.g. .env.prod)' {
             'ENVIRONMENT=default' | Set-Content TestDrive:\.env
             'ENVIRONMENT=prod' | Set-Content TestDrive:\.env.prod
-            Push-Location TestDrive:\
             Set-DotEnv -Environment 'prod'
             $env:ENVIRONMENT | Should -Be 'prod'
+        }
+        AfterAll {
+            Pop-Location
+        }
+    }
+    Context 'Given the -Environment and -Force parameters are set' {
+        BeforeAll {
+            Push-Location TestDrive:\
+        }
+        It 'gives precedence to environment-specific .env files (e.g. .env.prod) while saving the original value for restore' {
+            $env:ENVIRONMENT = 'previous'
+            'ENVIRONMENT=default' | Set-Content TestDrive:\.env
+            'ENVIRONMENT=prod' | Set-Content TestDrive:\.env.prod
+            $original = Set-DotEnv -Environment 'prod' -Force -PassThru
+            $env:ENVIRONMENT | Should -Be 'prod'
+            $original.ENVIRONMENT | Should -Be 'previous'
+        }
+        AfterAll {
             Pop-Location
         }
     }

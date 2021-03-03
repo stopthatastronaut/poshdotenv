@@ -69,7 +69,7 @@ function Set-DotEnv {
         $pattern = "(^\.env$)|(^\.env\.$Environment$)"
         do {
             Write-Verbose "looking in $searchDir..."
-            $envfiles = @(Get-ChildItem $searchDir.FullName -File | Where-Object { $_.Name -match $pattern }) | Sort-Object -Descending
+            $envfiles = @(Get-ChildItem $searchDir.FullName -File | Where-Object { $_.Name -match $pattern }) | Sort-Object
             $searchDir = $searchDir.Parent
         } while ($envfiles.Count -eq 0 -and $searchDir -and $Recurse)
         "Found $($envfiles.Count) .env files:" | Write-Verbose
@@ -80,8 +80,7 @@ function Set-DotEnv {
         $envfiles = Resolve-Path $Path
     }
 
-    $previousValues = @{}
-
+    $newEnv = @{}
     foreach ($file in $envfiles) {
         Write-Debug "processing file: $file"
 
@@ -102,15 +101,21 @@ function Set-DotEnv {
                 $value = $value -replace "^'|'$", ''
             }
 
-            if ( -not (Test-Path env:\$key) -or $Force ) {
-                $previousValues[$key] = [System.Environment]::GetEnvironmentVariable($key)
+            $newEnv[$key] = $value
+        }
+    }
 
-                if ($PSCmdlet.ShouldProcess("`$env:$key", "Set value to '$value'")) {
-                    [System.Environment]::SetEnvironmentVariable($key, $value)
-                }
+    $previousValues = @{}
+    foreach ($item in $newEnv.GetEnumerator()) {
+        if ( -not (Test-Path "Env:\$($item.Name)") -or $Force ) {
+            $previousValues[$item.Name] = [System.Environment]::GetEnvironmentVariable($item.Name)
+
+            if ($PSCmdlet.ShouldProcess("`$env:$($item.Name)", "Set value to '$($item.Value)'")) {
+                [System.Environment]::SetEnvironmentVariable($item.Name, $item.Value)
             }
         }
     }
+
 
     $env:DOTENV_PREVIOUS = $previousValues | ConvertTo-Json -Compress
 

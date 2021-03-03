@@ -19,14 +19,12 @@ function Restore-DotEnv {
             ($env:DOTENV_PREVIOUS | ConvertFrom-Json).PSObject.Properties |
                 ForEach-Object { $InputObject[$_.Name] = $_.Value }
         }
-        $InputObject.GetEnumerator() |
-            ForEach-Object -Begin {
-                Write-Verbose "Removing updated env vars"
-            } -Process {
-                if ($PSCmdlet.ShouldProcess("`$env:$($_.Name)", "Set value to '$($_.Value)'")) {
-                    [System.Environment]::SetEnvironmentVariable($_.Name, $_.Value)
-                }
+
+        foreach ($item in $InputObject.GetEnumerator()) {
+            if ($PSCmdlet.ShouldProcess("`$env:$($item.Name)", "Set value to '$($item.Value)'")) {
+                [System.Environment]::SetEnvironmentVariable($item.Name, $item.Value)
             }
+        }
 
         $env:DOTENV_PREVIOUS = $null
     }
