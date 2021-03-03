@@ -54,7 +54,7 @@ function Set-DotEnv {
     [CmdletBinding(SupportsShouldProcess, DefaultParameterSetName = 'Environment')]
     [OutputType([Hashtable])]
     param(
-        [Parameter(ParameterSetName = 'Path')]
+        [Parameter(ParameterSetName = 'Path', Position = 1)]
         [string]$Path,
         [Parameter(ParameterSetName = 'Environment')]
         [string]$Environment,
