@@ -3,20 +3,15 @@
   Load environment variables from local .env file
 
  .Description
-  Searches for local .env files and a load the defined environment variables
+  Searches for local .env files and loads the defined environment variables
   into the current environement. The search for environemnt files can also
   be done recursively across all parent directories.
 
-  Already existing variables are only overwritten when the `-Force` parameter
+  Already existing variables are only overwritten if the `-Force` parameter
   is given.
 
- .Parameter Name
-  The filename to look for. can be relative or absolute.
-  If a relative path is given, the file name can be looked
-  for recursively in the parent directories if the `-up`
-  paramter ist given.
-
-  Optional, default : '.env'
+ .Parameter Path
+  The path to the .env file that should be processed.
 
  .Parameter Environment
   This parameter can be used to define different execution environements
@@ -26,13 +21,11 @@
   With this communale settings can be kept in the default file and only
   the ones that differ need to be put into the respective second file.
 
-  If provided the 'env' value will be used to search for additional
+  If provided the 'Environment' value will be used to search for additional
   environment files that take precedence over the settings in the default
   file.
 
   E.g: `-Environment dev` searches also for `.env.dev`
-
-  Optional, default : disabled
 
  .Parameter Recurse
   The `.env` files are searched for from the current working directory up until
@@ -50,8 +43,9 @@
   keep the values of existing variables.
 
  .Example
-   # search all
-   PS> Set-DotEnv -Force -name localenv -Environment dev -up
+  Set-DotEnv -Force -Environment dev -Recurse
+  Search for .env and .env.dev files in the current and all parent directories
+  until one is found and set environment variables accordingly.
 
  .Link
   Restore-DotEnv
