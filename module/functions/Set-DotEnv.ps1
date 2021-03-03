@@ -34,7 +34,7 @@
 
   Optional, default : disabled
 
- .Parameter up
+ .Parameter Recurse
   The `.env` files are searched for from the current working directory up until
   one is found. Then the search is aborted.
 
@@ -57,146 +57,84 @@
   Restore-DotEnv
 #>
 function Set-DotEnv {
-    [CmdletBinding(SupportsShouldProcess = $true)]
+    [CmdletBinding(SupportsShouldProcess, DefaultParameterSetName = 'Environment')]
     [OutputType([System.Object[]])]
     param(
+        [Parameter(ParameterSetName = 'Path')]
         [string]$Path,
+        [Parameter(ParameterSetName = 'Environment')]
         [string]$Environment,
-        [switch]$up,
+        [Parameter(ParameterSetName = 'Environment')]
+        [switch]$Recurse,
         [switch]$PassThru,
         [switch]$Force
     )
 
-    if (-not $Path) {
-        $Path = Get-ChildItem -Filter '.env'
+    if ($PSCmdlet.ParameterSetName -eq 'Environment') {
+        $searchDir = Get-Item (Get-Location)
+        $pattern = "(^\.env$)|(^\.env\.$Environment$)"
+        do {
+            Write-Verbose "looking in $searchDir..."
+            $envfiles = @(Get-ChildItem $searchDir.FullName | Where-Object { $_.Name -match $pattern }) | Sort-Object -Descending
+            $searchDir = $searchDir.Parent
+        } while ($envfiles.Count -eq 0 -and $searchDir -and $Recurse)
+        "Found $($envfiles.Count) .env files:" | Write-Verbose
+        $envfiles.FullName | Write-Verbose
+
     }
     else {
-        $Path = Resolve-Path $Path
+        $envfiles = Resolve-Path $Path
     }
-
-    # location / environment specific file
-    $nameenv = "$Path.$Environment"
 
     $dotenv_added_vars = @{}      # a special var that tells us what we added
     $dotenv_overwritte_vars = @{} # a special var that tells us what we've overwritten
 
-    $fileslist = @()
+    foreach ($file in $envfiles) {
+        Write-Debug "processing file: $file"
 
-    do {
-        if ( $Environment -ne "") {
-            $fullnameenv = Resolve-Path $nameenv
-            if (Test-Path $fullnameenv) {
-                $fileslist = , $fullnameenv + $fileslist
+        foreach ($line in Get-Content $file) {
+            $line = $line.Trim()
+
+            if ($line -eq '' -or $line -like '#*') {
+                continue
             }
-        }
 
-        $fullname = Resolve-Path $Path
-        if (Test-Path $fullname) {
-            $fileslist = , $fullname + $fileslist
-        }
+            $key, $value = ($line -split '=', 2).Trim()
 
-        # exit if not search up
-        # no hierarchical search if absolute env name is given
-        if (-not $up -or $isNameAbsolute ) { break }
-
-        # found something, stop searching
-        if ( $fileslist.Count -ne 0 ) { break }
-
-        $dir = Split-Path $dir -Parent
-    } while ($dir -ne "")
-
-    if (  $fileslist.Count -eq 0 ) {
-        Write-Verbose "no env file found"
-    }
-    else {
-        $count = $fileslist.Count
-        Write-Verbose "found $count env files:"
-        $fileslist | ForEach-Object { Write-Verbose "`t$_" }
-    }
-
-    foreach ( $file in $fileslist) {
-
-        Write-Verbose "### processing file: $file"
-        $content = Get-Content $file -ErrorAction SilentlyContinue # if i doesn't exist, forget it
-
-        $linecursor = 1
-        $content | ForEach-Object { # go through line by line
-            [string]$line = $_.trim() # trim whitespace
-            if ($line -like "#*") {
-                # it's a comment
-                Write-Verbose "Found comment $line at line $linecursor. discarding"
+            if ($value -like '"*"') {
+                # expand \n to `n for double quoted values
+                $value = $value.Trim('"') -replace '(?<!\\)(\\n)', "`n"
             }
-            elseif ($line -eq "") {
-                # it's a blank line
-                Write-Verbose "Found a blank line at line $linecursor, discarding"
+            elseif ($value -like "'*'") {
+                $value = $value.Trim("'")
             }
-            else {
-                # it's not a comment, parse it
-                # find the first '='
-                $eq = $line.IndexOf('=')
-                $fq = $eq + 1
-                $ln = $line.Length
 
-                if ( $eq -eq -1) {
-                    Write-Error "File $file : NO assignment operator in line $linecursor. Syntax correct?"
+            if ( -not (Test-Path env:\$key) -or $Force ) {
+                # save only orignal value == when overwritten the first time
+                if ((Test-Path env:\$key) -and -not $dotenv_added_vars.ContainsKey($key) ) {
+                    Write-Verbose "Saving already existing env variable '$key=$value'"
+                    $value_old = [System.Environment]::GetEnvironmentVariable($key)
+                    $dotenv_overwritte_vars[$key] = $value_old
                 }
                 else {
-                    #Write-Verbose "Found an assignment operator at position $eq in a string of length $ln on line $linecursor"
-
-                    $key = $line.Substring(0, $eq).trim()
-                    $value = $line.substring($fq, $line.Length - $fq).trim()
-                    Write-Verbose "Found '$key' with value '$value'"
-
-                    if ($value -like '"*"') {
-                        Write-Verbose "Value is doulbe quoted - expanding newlines"
-                        $value = $value -replace '(?<!\\)(\\n)', "`n"
-                    }
-                    if ($value -match "`'|`"") {
-                        Write-Verbose "`tQuoted value found, trimming quotes"
-                        $value = $value.trim('"').trim("'")
-                        Write-Verbose "`tValue is now '$value'"
-                    }
-
-                    # if set by previous env file, remove  ...
-                    if ( $dotenv_added_vars.ContainsKey($key) ) {
-                        Write-Verbose "Overwriting already set DotEnv '$key' with value '$value'"
-                        # overwrite because new content comes from a different .env.<> file
-                        [System.Environment]::SetEnvironmentVariable($key, $value)
-                        $dotenv_added_vars[$key] = $value
-                    }
-                    elseif ( -not ( Test-Path env:\$key ) -or $Force) {
-                        # if env not already set or Force is given
-
-                        if ( Test-Path env:\$key ) {
-                            # save only orignal value == when overwritte the first time
-                            if ( -not $dotenv_added_vars.ContainsKey($key) ) {
-                                Write-Verbose "Saving env variable '$key=$value'"
-                                $value_old = [System.Environment]::GetEnvironmentVariable($key)
-                                $dotenv_overwritte_vars[$key] = $value_old
-                            }
-                        }
-
-                        Write-Verbose "Setting DotEnv '$key' with value '$value'"
-                        [System.Environment]::SetEnvironmentVariable($key, $value)
-                        # set add new value
-                        $dotenv_added_vars[$key] = $value
-                    }
-                    else {
-                        Write-Verbose "ignore '$key', already set in original environment"
-                    }
+                    $dotenv_added_vars[$key] = $value
+                }
+                if ($PSCmdlet.ShouldProcess("`$env:$key", "Set to value '$value'")) {
+                    Write-Verbose "Setting DotEnv '$key' with value '$value'"
+                    [System.Environment]::SetEnvironmentVariable($key, $value)
                 }
             }
-            $linecursor++
         }
     }
 
-    $env:dotenv_overwritten_vars = ($dotenv_overwritte_vars.keys -join (","))
-    $env:dotenv_added_vars = ($dotenv_added_vars.keys -join (","))
+    $env:dotenv_overwritten_vars = $dotenv_overwritte_vars.keys -join (",")
+    $env:dotenv_added_vars = $dotenv_added_vars.keys -join (",")
 
     if ($PassThru) {
         Write-Verbose "PassThru was specified, returning the array of found vars"
-        return [PSCustomObject]@{ Added = $dotenv_added_vars
-            Overwritten                 = $dotenv_overwritte_vars
+        return [PSCustomObject]@{
+            Added       = $dotenv_added_vars
+            Overwritten = $dotenv_overwritte_vars
         }
     }
 }

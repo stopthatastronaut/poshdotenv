@@ -8,6 +8,12 @@ Describe 'Set-DotEnv' {
         $script:originalEnv = Get-ChildItem env:\
     }
 
+    Context 'Given an explicit .env file path with the -Path parameter' {
+        It 'Reports an error if the file does not exist' {
+            { Set-DotEnv -Path TestDrive:\.env -ErrorAction Stop } | Should -Throw
+        }
+    }
+
     Context 'Given the -PassThru switch is set' {
         It 'Returns the value of envvars that did not previously exist in the "Added" section' {
             $env:NEWENV = ''
@@ -83,6 +89,16 @@ Describe 'Set-DotEnv' {
         It 'can handle values with equals signs that are quoted' {
             Set-DotEnv
             $env:QUOTED_EQUALS | Should -Be "this=value=has=equals=signs=in=it"
+        }
+    }
+    Context 'Given a specific environment is specified with the -Environment parameter' {
+        It 'gives precedence to environment-specific .env files (e.g. .env.prod)' {
+            'ENVIRONMENT=default' | Set-Content TestDrive:\.env
+            'ENVIRONMENT=prod' | Set-Content TestDrive:\.env.prod
+            Push-Location TestDrive:\
+            Set-DotEnv -Environment 'prod'
+            $env:ENVIRONMENT | Should -Be 'prod'
+            Pop-Location
         }
     }
 
