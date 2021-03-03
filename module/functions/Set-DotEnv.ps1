@@ -103,10 +103,10 @@ function Set-DotEnv {
 
             if ($value -like '"*"') {
                 # expand \n to `n for double quoted values
-                $value = $value.Trim('"') -replace '(?<!\\)(\\n)', "`n"
+                $value = $value -replace '^"|"$', '' -replace '(?<!\\)(\\n)', "`n"
             }
             elseif ($value -like "'*'") {
-                $value = $value.Trim("'")
+                $value = $value -replace "^'|'$", ''
             }
 
             if ( -not (Test-Path env:\$key) -or $Force ) {
