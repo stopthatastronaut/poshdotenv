@@ -1,17 +1,16 @@
-Describe 'Set-DotEnv' {
+Describe 'Push-DotEnv' {
     BeforeAll {
-        . $PSScriptRoot/../module/dotenv/functions/Set-DotEnv.ps1
+        . $PSScriptRoot/../module/dotenv/functions/Push-DotEnv.ps1
         Push-Location $PSScriptRoot
     }
 
     BeforeEach {
-        $env:DOTENV_PREVIOUS = '{}'
         $script:originalEnv = Get-ChildItem env:\
     }
 
     Context 'Given an explicit .env file path with the -Path parameter' {
         It 'Reports an error if the file does not exist' {
-            { Set-DotEnv -Path TestDrive:\.env -ErrorAction Stop } | Should -Throw
+            { Push-DotEnv -Path TestDrive:\.env -ErrorAction Stop } | Should -Throw
         }
     }
 
@@ -19,7 +18,7 @@ Describe 'Set-DotEnv' {
         It 'Returns the value of envvars that did not previously exist' {
             $env:NEWENV = ''
             'NEWENV=newenv' | Set-Content TestDrive:\.env
-            $vars = Set-DotEnv -Path TestDrive:\.env -PassThru
+            $vars = Push-DotEnv -Path TestDrive:\.env -PassThru
             $env:NEWENV | Should -Be 'newenv'
             $vars.Keys | Should -Contain 'NEWENV'
             $vars.NEWENV | Should -BeNullOrEmpty
@@ -30,7 +29,7 @@ Describe 'Set-DotEnv' {
         It 'Returns the previous value of envvars that did already exist and were overwritten' {
             $env:OLDENV = 'oldenv'
             'OLDENV=newenv' | Set-Content TestDrive:\.env
-            $vars = Set-DotEnv -Path TestDrive:\.env -PassThru -Force
+            $vars = Push-DotEnv -Path TestDrive:\.env -PassThru -Force
             $env:OLDENV | Should -Be 'newenv'
             $vars.OLDENV | Should -Be 'oldenv'
         }
@@ -40,56 +39,56 @@ Describe 'Set-DotEnv' {
         It 'does not overwrite already existing envvars' {
             $env:OLDENV = 'oldenv'
             'OLDENV=newenv' | Set-Content TestDrive:\.env
-            Set-DotEnv -Path TestDrive:\.env
+            Push-DotEnv -Path TestDrive:\.env
             $env:OLDENV | Should -Be 'oldenv'
         }
         It 'BASIC=basic becomes $env:BASIC = "basic"' {
-            Set-DotEnv
+            Push-DotEnv
             $env:BASIC | Should -Be 'basic'
         }
         It 'empty lines are skipped' {
             '',
             '    ' | Set-Content TestDrive:\.env
-            { Set-DotEnv -Path TestDrive:\.env -ErrorAction Stop } | Should -Not -Throw
-            Get-ChildItem Env:\ | Where-Object { $script:originalEnv -notcontains $_ } | Should -BeNullOrEmpty
+            { Push-DotEnv -Path TestDrive:\.env -ErrorAction Stop } | Should -Not -Throw
+            Get-ChildItem Env:\ | Where-Object { $script:originalEnv -notcontains $_ -and $_.Name -ne 'DOTENV_PREVIOUS' } | Should -BeNullOrEmpty
         }
         It 'lines beginning with # are treated as comments' {
             '# this is a comment',
             '#this is another comment',
             '    # this is an indented comment' | Set-Content TestDrive:\.env
-            { Set-DotEnv -Path TestDrive:\.env -ErrorAction Stop } | Should -Not -Throw
-            Get-ChildItem Env:\ | Where-Object { $script:originalEnv -notcontains $_ } | Should -BeNullOrEmpty
+            { Push-DotEnv -Path TestDrive:\.env -ErrorAction Stop } | Should -Not -Throw
+            Get-ChildItem Env:\ | Where-Object { $script:originalEnv -notcontains $_ -and $_.Name -ne 'DOTENV_PREVIOUS' } | Should -BeNullOrEmpty
         }
         # setting env variables to empty string is not possible in PowerShell
         It 'empty values become $null (EMPTY= becomes $env:EMPTY = $null)' {
-            Set-DotEnv
+            Push-DotEnv
             $env:EMPTY | Should -Be $null
         }
         It 'inner quotes are maintained (think JSON) (JSON={"foo": "bar"} becomes $env:JSON = "{`"foo`": `"bar`"}")' {
-            Set-DotEnv
+            Push-DotEnv
             $env:JSON | Should -Be '{"foo": "bar"}'
         }
         It 'whitespace is removed from both ends of unquoted values (FOO= some value becomes $env:FOO = "some value")' {
-            Set-DotEnv
+            Push-DotEnv
             $env:FOO | Should -Be 'some value'
         }
         # TODO specification unclear
         It 'single and doulbe quoted values are escaped (SINGLE_QUOTE=''quoted'' becomes $env:SINGLE_QUOTE = "quoted")' -Pending {
-            Set-DotEnv
+            Push-DotEnv
             $env:SINGLE_QUOTE | Should -Be "'quoted'"
             $env:DOUBLE_QUOTE | Should -Be '"quoted"'
         }
         It 'single and double quoted values maintain whitespace from both ends (FOO='' some value '' becomes $env:FOO = " some value ")' {
-            Set-DotEnv
+            Push-DotEnv
             $env:SINGLE_QUOTE_WHITESPACE | Should -Be ' some value '
             $env:DOUBLE_QUOTE_WHITESPACE | Should -Be ' some value '
         }
         It 'double quoted values expand new lines (MULTILINE="new\nline" becomes $env:MULTILINE = "new`nline"' {
-            Set-DotEnv
+            Push-DotEnv
             $env:MULTILINE | Should -Be "new`nline"
         }
         It 'can handle values with equals signs that are quoted' {
-            Set-DotEnv
+            Push-DotEnv
             $env:QUOTED_EQUALS | Should -Be "this=value=has=equals=signs=in=it"
         }
     }
@@ -100,7 +99,7 @@ Describe 'Set-DotEnv' {
         It 'gives precedence to environment-specific .env files (e.g. .env.prod)' {
             'ENVIRONMENT=default' | Set-Content TestDrive:\.env
             'ENVIRONMENT=prod' | Set-Content TestDrive:\.env.prod
-            Set-DotEnv -Environment 'prod'
+            Push-DotEnv -Environment 'prod'
             $env:ENVIRONMENT | Should -Be 'prod'
         }
         AfterAll {
@@ -115,7 +114,7 @@ Describe 'Set-DotEnv' {
             $env:ENVIRONMENT = 'previous'
             'ENVIRONMENT=default' | Set-Content TestDrive:\.env
             'ENVIRONMENT=prod' | Set-Content TestDrive:\.env.prod
-            $original = Set-DotEnv -Environment 'prod' -Force -PassThru
+            $original = Push-DotEnv -Environment 'prod' -Force -PassThru
             $env:ENVIRONMENT | Should -Be 'prod'
             $original.ENVIRONMENT | Should -Be 'previous'
         }

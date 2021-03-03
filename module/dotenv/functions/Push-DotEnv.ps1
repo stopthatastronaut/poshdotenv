@@ -43,14 +43,14 @@
   keep the values of existing variables.
 
  .Example
-  Set-DotEnv -Force -Environment dev -Recurse
+  Push-DotEnv -Force -Environment dev -Recurse
   Search for .env and .env.dev files in the current and all parent directories
   until one is found and set environment variables accordingly.
 
  .Link
-  Restore-DotEnv
+  Pop-DotEnv
 #>
-function Set-DotEnv {
+function Push-DotEnv {
     [CmdletBinding(SupportsShouldProcess, DefaultParameterSetName = 'Environment')]
     [OutputType([Hashtable])]
     param(
@@ -105,7 +105,9 @@ function Set-DotEnv {
         }
     }
 
-    $previousValues = @{}
+    $previousValues = @{
+        DOTENV_PREVIOUS = $env:DOTENV_PREVIOUS
+    }
     foreach ($item in $newEnv.GetEnumerator()) {
         if ( -not (Test-Path "Env:\$($item.Name)") -or $Force ) {
             $previousValues[$item.Name] = [System.Environment]::GetEnvironmentVariable($item.Name)

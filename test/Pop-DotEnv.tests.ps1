@@ -1,6 +1,6 @@
-Describe 'Set-DotEnv' {
+Describe 'Pop-DotEnv' {
     BeforeAll {
-        . $PSScriptRoot/../module/dotenv/functions/Restore-DotEnv.ps1
+        . $PSScriptRoot/../module/dotenv/functions/Pop-DotEnv.ps1
     }
 
     BeforeEach {
@@ -15,26 +15,9 @@ Describe 'Set-DotEnv' {
             } | ConvertTo-Json
             $env:DID_NOT_EXIST = 'but does now'
             $env:WAS_OVERWRITTEN = 'current'
-            Restore-DotEnv
+            Pop-DotEnv
             $env:DID_NOT_EXIST | Should -BeNullOrEmpty
             $env:WAS_OVERWRITTEN | Should -Be 'previous'
-        }
-    }
-
-    Context 'Given the output of Set-DotEnv -PassThru' {
-        It 'removes added EnvVars' {
-            $env:ADDED = 'added'
-            @{
-                ADDED = $null
-            } | Restore-DotEnv
-            $env:ADDED | Should -BeNullOrEmpty
-        }
-        It 'restores overwritten EnvVars to their previous value' {
-            $env:OVERWRITTEN = 'custom'
-            @{
-                OVERWRITTEN = 'previous'
-            } | Restore-DotEnv
-            $env:OVERWRITTEN | Should -Be 'previous'
         }
     }
 
