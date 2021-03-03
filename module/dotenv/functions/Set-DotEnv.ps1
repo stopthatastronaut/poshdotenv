@@ -52,7 +52,7 @@
 #>
 function Set-DotEnv {
     [CmdletBinding(SupportsShouldProcess, DefaultParameterSetName = 'Environment')]
-    [OutputType([System.Object[]])]
+    [OutputType([Hashtable])]
     param(
         [Parameter(ParameterSetName = 'Path')]
         [string]$Path,
@@ -80,8 +80,7 @@ function Set-DotEnv {
         $envfiles = Resolve-Path $Path
     }
 
-    $added = @{}      # a special var that tells us what we added
-    $overwritten = @{} # a special var that tells us what we've overwritten
+    $previousValues = @{}
 
     foreach ($file in $envfiles) {
         Write-Debug "processing file: $file"
@@ -104,27 +103,19 @@ function Set-DotEnv {
             }
 
             if ( -not (Test-Path env:\$key) -or $Force ) {
-                # save only orignal value == when overwritten the first time
-                if ((Test-Path env:\$key) -and -not $added.ContainsKey($key) ) {
-                    Write-Verbose "Saving already existing env variable '$key=$value'"
-                    $overwritten[$key] = [System.Environment]::GetEnvironmentVariable($key)
-                }
-                else {
-                    $added[$key] = $value
-                }
-                if ($PSCmdlet.ShouldProcess("`$env:$key", "Set to value '$value'")) {
-                    Write-Verbose "Setting DotEnv '$key' with value '$value'"
+                $previousValues[$key] = [System.Environment]::GetEnvironmentVariable($key)
+
+                if ($PSCmdlet.ShouldProcess("`$env:$key", "Set value to '$value'")) {
                     [System.Environment]::SetEnvironmentVariable($key, $value)
                 }
             }
         }
     }
 
+    $env:DOTENV_PREVIOUS = $previousValues | ConvertTo-Json -Compress
+
     if ($PassThru) {
         Write-Verbose "PassThru was specified, returning the array of found vars"
-        return [PSCustomObject]@{
-            Added       = $added
-            Overwritten = $overwritten
-        }
+        return $previousValues
     }
 }

@@ -5,6 +5,7 @@ Describe 'Set-DotEnv' {
     }
 
     BeforeEach {
+        $env:DOTENV_PREVIOUS = '{}'
         $script:originalEnv = Get-ChildItem env:\
     }
 
@@ -15,22 +16,23 @@ Describe 'Set-DotEnv' {
     }
 
     Context 'Given the -PassThru switch is set' {
-        It 'Returns the value of envvars that did not previously exist in the "Added" section' {
+        It 'Returns the value of envvars that did not previously exist' {
             $env:NEWENV = ''
             'NEWENV=newenv' | Set-Content TestDrive:\.env
             $vars = Set-DotEnv -Path TestDrive:\.env -PassThru
             $env:NEWENV | Should -Be 'newenv'
-            $vars.Added.NEWENV | Should -Be 'newenv'
+            $vars.Keys | Should -Contain 'NEWENV'
+            $vars.NEWENV | Should -BeNullOrEmpty
         }
     }
 
     Context 'Given the -PassThru and -Force switches are set' {
-        It 'Returns the previous value of envvars that did already exist in the "Overwritten" section' {
+        It 'Returns the previous value of envvars that did already exist and were overwritten' {
             $env:OLDENV = 'oldenv'
             'OLDENV=newenv' | Set-Content TestDrive:\.env
             $vars = Set-DotEnv -Path TestDrive:\.env -PassThru -Force
             $env:OLDENV | Should -Be 'newenv'
-            $vars.Overwritten.OLDENV | Should -Be 'oldenv'
+            $vars.OLDENV | Should -Be 'oldenv'
         }
     }
 
@@ -49,14 +51,14 @@ Describe 'Set-DotEnv' {
             '',
             '    ' | Set-Content TestDrive:\.env
             { Set-DotEnv -Path TestDrive:\.env -ErrorAction Stop } | Should -Not -Throw
-            Get-ChildItem Env:\ | Where-Object { $script:originalEnv -notcontains $_ } | Should -Be -Empty
+            Get-ChildItem Env:\ | Where-Object { $script:originalEnv -notcontains $_ } | Should -BeNullOrEmpty
         }
         It 'lines beginning with # are treated as comments' {
             '# this is a comment',
             '#this is another comment',
             '    # this is an indented comment' | Set-Content TestDrive:\.env
             { Set-DotEnv -Path TestDrive:\.env -ErrorAction Stop } | Should -Not -Throw
-            Get-ChildItem Env:\ | Where-Object { $script:originalEnv -notcontains $_ } | Should -Be -Empty
+            Get-ChildItem Env:\ | Where-Object { $script:originalEnv -notcontains $_ } | Should -BeNullOrEmpty
         }
         # setting env variables to empty string is not possible in PowerShell
         It 'empty values become $null (EMPTY= becomes $env:EMPTY = $null)' {
