@@ -1,25 +1,27 @@
 <#
 .SYNOPSIS
 Restore-DotEnv removes environment variables previously loaded by Set-DotEnv
-AND restores overwritten ones. Needs as input the return value from `Set-DotEnv -returnvars`.
+AND restores overwritten ones. Needs as input the return value from `Set-DotEnv -PassThru`.
 #>
 function Restore-DotEnv {
-    [CmdletBinding(SupportsShouldProcess = $true)]
+    [CmdletBinding(SupportsShouldProcess)]
     param(
-        [Parameter(Mandatory = $true)]
-        [Hashtable]$returnvars
+        [Parameter(Mandatory, ValueFromPipeline)]
+        [PSCustomObject]$InputObject
     )
 
-    Write-Verbose "Removing updated env vars"
-    $returnvars.added.keys | ForEach-Object {
-        Remove-Item "ENV:/$_" -ErrorAction SilentlyContinue
+    Process {
+        $InputObject.Added.GetEnumerator() |
+            ForEach-Object -Begin {
+                Write-Verbose "Removing updated env vars"
+            } -Process {
+                Remove-Item "Env:/$($_.Name)" -ErrorAction SilentlyContinue
+            }
+        $InputObject.Overwritten.GetEnumerator() |
+            ForEach-Object -Begin {
+                Write-Verbose "Restore overwritten env vars"
+            } -Process {
+                [System.Environment]::SetEnvironmentVariable($_.Name, $_.Value)
+            }
     }
-    Write-Verbose "Restore overwritten env vars"
-    $returnvars.overwritten.GetEnumerator() | ForEach-Object {
-        [System.Environment]::SetEnvironmentVariable($_.Name, $_.Value)
-    }
-
-    Remove-Item "ENV:/dotenv_added_vars" -ErrorAction SilentlyContinue
-    Remove-Item "ENV:/dotenv_overwritten_vars" -ErrorAction SilentlyContinue
-
 }

@@ -80,8 +80,8 @@ function Set-DotEnv {
         $envfiles = Resolve-Path $Path
     }
 
-    $dotenv_added_vars = @{}      # a special var that tells us what we added
-    $dotenv_overwritten_vars = @{} # a special var that tells us what we've overwritten
+    $added = @{}      # a special var that tells us what we added
+    $overwritten = @{} # a special var that tells us what we've overwritten
 
     foreach ($file in $envfiles) {
         Write-Debug "processing file: $file"
@@ -105,13 +105,12 @@ function Set-DotEnv {
 
             if ( -not (Test-Path env:\$key) -or $Force ) {
                 # save only orignal value == when overwritten the first time
-                if ((Test-Path env:\$key) -and -not $dotenv_added_vars.ContainsKey($key) ) {
+                if ((Test-Path env:\$key) -and -not $added.ContainsKey($key) ) {
                     Write-Verbose "Saving already existing env variable '$key=$value'"
-                    $value_old = [System.Environment]::GetEnvironmentVariable($key)
-                    $dotenv_overwritten_vars[$key] = $value_old
+                    $overwritten[$key] = [System.Environment]::GetEnvironmentVariable($key)
                 }
                 else {
-                    $dotenv_added_vars[$key] = $value
+                    $added[$key] = $value
                 }
                 if ($PSCmdlet.ShouldProcess("`$env:$key", "Set to value '$value'")) {
                     Write-Verbose "Setting DotEnv '$key' with value '$value'"
@@ -121,14 +120,11 @@ function Set-DotEnv {
         }
     }
 
-    $env:dotenv_overwritten_vars = $dotenv_overwritten_vars.keys -join (",")
-    $env:dotenv_added_vars = $dotenv_added_vars.keys -join (",")
-
     if ($PassThru) {
         Write-Verbose "PassThru was specified, returning the array of found vars"
         return [PSCustomObject]@{
-            Added       = $dotenv_added_vars
-            Overwritten = $dotenv_overwritten_vars
+            Added       = $added
+            Overwritten = $overwritten
         }
     }
 }
