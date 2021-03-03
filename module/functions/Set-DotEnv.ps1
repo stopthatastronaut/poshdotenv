@@ -75,7 +75,7 @@ function Set-DotEnv {
         $pattern = "(^\.env$)|(^\.env\.$Environment$)"
         do {
             Write-Verbose "looking in $searchDir..."
-            $envfiles = @(Get-ChildItem $searchDir.FullName | Where-Object { $_.Name -match $pattern }) | Sort-Object -Descending
+            $envfiles = @(Get-ChildItem $searchDir.FullName -File | Where-Object { $_.Name -match $pattern }) | Sort-Object -Descending
             $searchDir = $searchDir.Parent
         } while ($envfiles.Count -eq 0 -and $searchDir -and $Recurse)
         "Found $($envfiles.Count) .env files:" | Write-Verbose
