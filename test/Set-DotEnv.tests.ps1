@@ -1,6 +1,6 @@
 Describe 'Set-DotEnv' {
     BeforeAll {
-        . $PSScriptRoot/../module/functions/Set-DotEnv.ps1
+        . $PSScriptRoot/../module/dotenv/functions/Set-DotEnv.ps1
         Push-Location $PSScriptRoot
     }
 

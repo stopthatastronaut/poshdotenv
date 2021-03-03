@@ -1,6 +1,6 @@
 Describe 'Set-DotEnv' {
     BeforeAll {
-        . $PSScriptRoot/../module/functions/Restore-DotEnv.ps1
+        . $PSScriptRoot/../module/dotenv/functions/Restore-DotEnv.ps1
     }
 
     BeforeEach {
