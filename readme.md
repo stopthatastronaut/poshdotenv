@@ -16,9 +16,9 @@ Install, call.
 
 ```powershell
 Import-Module dotenv
-Set-DotEnv # loads from the local .env file
+$customEnv = Set-DotEnv -PassThru # loads from the local .env file
 # code here
-Remove-DotEnv # clears the variables that were loaded by set-dotenv
+$customEnv | Restore-DotEnv # clears the variables that were loaded by set-dotenv
 ```
 
 ### Advanced scenarios
@@ -27,9 +27,9 @@ If you want to keep several .env files alongside your repo, you can use the path
 
 ```powershell
 Import-Module dotenv
-Set-DotEnv -path ./env.staging
+$customEnv = Set-DotEnv -Path ./env.staging -PassThru
 # code here
-Remove-DotEnv
+$customEnv | Restore-DotEnv
 ```
 
 ### Escaping
@@ -39,7 +39,6 @@ This module can handle values with an extra '=' in them, and can handle quoted s
 ## Coming Soon
 
 - Allow append and prepend with `:=`/`=:` syntax
-- Recurse support (parameter currently non-functional)
 - Extra testing, especially around injection of 'bad' vars, because we're dealing with possible third-party input here
 
 ## Contributing
