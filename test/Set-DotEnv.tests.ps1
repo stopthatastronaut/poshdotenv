@@ -9,7 +9,7 @@ Describe 'Set-DotEnv' {
     }
 
     Context 'Given the -PassThru switch is set' {
-        It "Returns the value of envvars that did not previously exist in the 'Added' section" {
+        It 'Returns the value of envvars that did not previously exist in the "Added" section' {
             $env:NEWENV = ''
             'NEWENV=newenv' | Set-Content TestDrive:\.env
             $vars = Set-DotEnv -Path TestDrive:\.env -PassThru
@@ -19,7 +19,7 @@ Describe 'Set-DotEnv' {
     }
 
     Context 'Given the -PassThru and -Force switches are set' {
-        It "Returns the previous value of envvars that did already exist in the 'Overwritten' section" {
+        It 'Returns the previous value of envvars that did already exist in the "Overwritten" section' {
             $env:OLDENV = 'oldenv'
             'OLDENV=newenv' | Set-Content TestDrive:\.env
             $vars = Set-DotEnv -Path TestDrive:\.env -PassThru -Force
@@ -79,6 +79,10 @@ Describe 'Set-DotEnv' {
         It 'double quoted values expand new lines (MULTILINE="new\nline" becomes $env:MULTILINE = "new`nline"' {
             Set-DotEnv
             $env:MULTILINE | Should -Be "new`nline"
+        }
+        It 'can handle values with equals signs that are quoted' {
+            Set-DotEnv
+            $env:QUOTED_EQUALS | Should -Be "this=value=has=equals=signs=in=it"
         }
     }
 
