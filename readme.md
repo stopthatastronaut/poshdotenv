@@ -16,9 +16,9 @@ Install, call.
 
 ```powershell
 Import-Module dotenv
-$customEnv = Set-DotEnv -PassThru # loads from the local .env file
+Set-DotEnv # loads from the local .env file
 # code here
-$customEnv | Restore-DotEnv # clears the variables that were loaded by set-dotenv
+Restore-DotEnv # clears the variables that were loaded by set-dotenv
 ```
 
 ### Advanced scenarios
@@ -27,9 +27,9 @@ If you want to keep several .env files alongside your repo, you can use the path
 
 ```powershell
 Import-Module dotenv
-$customEnv = Set-DotEnv -Path ./env.staging -PassThru
+Set-DotEnv -Path ./env.staging
 # code here
-$customEnv | Restore-DotEnv
+Restore-DotEnv
 ```
 
 ### Escaping
