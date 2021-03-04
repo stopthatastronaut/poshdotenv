@@ -110,16 +110,16 @@ function Push-DotEnv {
     }
     foreach ($item in $newEnv.GetEnumerator()) {
         if ( -not (Test-Path "Env:\$($item.Name)") -or $AllowClobber ) {
-            $previousValues[$item.Name] = [System.Environment]::GetEnvironmentVariable($item.Name)
-
             if ($PSCmdlet.ShouldProcess("`$env:$($item.Name)", "Set value to '$($item.Value)'")) {
+                $previousValues[$item.Name] = [System.Environment]::GetEnvironmentVariable($item.Name)
                 [System.Environment]::SetEnvironmentVariable($item.Name, $item.Value)
             }
         }
     }
 
-
-    $env:DOTENV_PREVIOUS = $previousValues | ConvertTo-Json -Compress
+    if ($PSCmdlet.ShouldProcess('$env:DOTENV_PREVIOUS', "Push previous env values")) {
+        $env:DOTENV_PREVIOUS = $previousValues | ConvertTo-Json -Compress
+    }
 
     if ($PassThru) {
         Write-Verbose "PassThru was specified, returning the array of found vars"
