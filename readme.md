@@ -18,7 +18,7 @@ Install, call.
 Import-Module dotenv
 Set-DotEnv # loads from the local .env file
 # code here
-Restore-DotEnv # clears the variables that were loaded by set-dotenv
+Remove-DotEnv # clears the variables that were loaded by set-dotenv
 ```
 
 ### Advanced scenarios
@@ -29,12 +29,12 @@ If you want to keep several .env files alongside your repo, you can use the path
 Import-Module dotenv
 Set-DotEnv -Path ./env.staging
 # code here
-Restore-DotEnv
+Remove-DotEnv
 ```
 
 ### Escaping
 
-This module can handle values with an extra '=' in them, and can handle quoted strings (single and double). For more complex scenarioes, it may be advisable to base64 encode the values, and then decode as they're needed.
+This module can handle values with an extra '=' in them, and can handle quoted strings (single and double). For more complex scenarios, it may be advisable to base64 encode the values, and then decode as they're needed.
 
 ## Coming Soon
 

@@ -27,7 +27,7 @@
 
   E.g: `-Environment dev` searches also for `.env.dev`
 
- .Parameter Recurse
+ .Parameter Up
   The `.env` files are searched for from the current working directory up until
   one is found. Then the search is aborted.
 
@@ -43,7 +43,7 @@
   keep the values of existing variables.
 
  .Example
-  Push-DotEnv -AllowClobber -Environment dev -Recurse
+  Push-DotEnv -AllowClobber -Environment dev -Up
   Search for .env and .env.dev files in the current and all parent directories
   until one is found and set environment variables accordingly.
 
@@ -59,7 +59,7 @@ function Push-DotEnv {
         [Parameter(ParameterSetName = 'Environment')]
         [string]$Environment,
         [Parameter(ParameterSetName = 'Environment')]
-        [switch]$Recurse,
+        [switch]$Up,
         [switch]$AllowClobber,
         [switch]$PassThru
     )
@@ -71,7 +71,7 @@ function Push-DotEnv {
             Write-Verbose "looking in $searchDir..."
             $envfiles = @(Get-ChildItem $searchDir.FullName -File | Where-Object { $_.Name -match $pattern }) | Sort-Object
             $searchDir = $searchDir.Parent
-        } while ($envfiles.Count -eq 0 -and $searchDir -and $Recurse)
+        } while ($envfiles.Count -eq 0 -and $searchDir -and $Up)
         "Found $($envfiles.Count) .env files:" | Write-Verbose
         $envfiles.FullName | Write-Verbose
 
