@@ -7,7 +7,7 @@
   into the current environement. The search for environemnt files can also
   be done recursively across all parent directories.
 
-  Already existing variables are only overwritten if the `-Force` parameter
+  Already existing variables are only overwritten if the `-AllowClobber` parameter
   is given.
 
  .Parameter Path
@@ -38,12 +38,12 @@
   returns the added and overwritten environment variables with their values.
   This can be used to completely restore the original environment
 
- .Parameter Force
+ .Parameter AllowClobber
   Already existing environment variables will be overwritten. Default is to
   keep the values of existing variables.
 
  .Example
-  Push-DotEnv -Force -Environment dev -Recurse
+  Push-DotEnv -AllowClobber -Environment dev -Recurse
   Search for .env and .env.dev files in the current and all parent directories
   until one is found and set environment variables accordingly.
 
@@ -60,8 +60,8 @@ function Push-DotEnv {
         [string]$Environment,
         [Parameter(ParameterSetName = 'Environment')]
         [switch]$Recurse,
-        [switch]$PassThru,
-        [switch]$Force
+        [switch]$AllowClobber,
+        [switch]$PassThru
     )
 
     if ($PSCmdlet.ParameterSetName -eq 'Environment') {
@@ -109,7 +109,7 @@ function Push-DotEnv {
         DOTENV_PREVIOUS = $env:DOTENV_PREVIOUS
     }
     foreach ($item in $newEnv.GetEnumerator()) {
-        if ( -not (Test-Path "Env:\$($item.Name)") -or $Force ) {
+        if ( -not (Test-Path "Env:\$($item.Name)") -or $AllowClobber ) {
             $previousValues[$item.Name] = [System.Environment]::GetEnvironmentVariable($item.Name)
 
             if ($PSCmdlet.ShouldProcess("`$env:$($item.Name)", "Set value to '$($item.Value)'")) {

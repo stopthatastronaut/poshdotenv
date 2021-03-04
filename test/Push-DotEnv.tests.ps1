@@ -25,11 +25,11 @@ Describe 'Push-DotEnv' {
         }
     }
 
-    Context 'Given the -PassThru and -Force switches are set' {
+    Context 'Given the -PassThru and -AllowClobber switches are set' {
         It 'Returns the previous value of envvars that did already exist and were overwritten' {
             $env:OLDENV = 'oldenv'
             'OLDENV=newenv' | Set-Content TestDrive:\.env
-            $vars = Push-DotEnv -Path TestDrive:\.env -PassThru -Force
+            $vars = Push-DotEnv -Path TestDrive:\.env -PassThru -AllowClobber
             $env:OLDENV | Should -Be 'newenv'
             $vars.OLDENV | Should -Be 'oldenv'
         }
@@ -106,7 +106,7 @@ Describe 'Push-DotEnv' {
             Pop-Location
         }
     }
-    Context 'Given the -Environment and -Force parameters are set' {
+    Context 'Given the -Environment and -AllowClobber parameters are set' {
         BeforeAll {
             Push-Location TestDrive:\
         }
@@ -114,7 +114,7 @@ Describe 'Push-DotEnv' {
             $env:ENVIRONMENT = 'previous'
             'ENVIRONMENT=default' | Set-Content TestDrive:\.env
             'ENVIRONMENT=prod' | Set-Content TestDrive:\.env.prod
-            $original = Push-DotEnv -Environment 'prod' -Force -PassThru
+            $original = Push-DotEnv -Environment 'prod' -AllowClobber -PassThru
             $env:ENVIRONMENT | Should -Be 'prod'
             $original.ENVIRONMENT | Should -Be 'previous'
         }
