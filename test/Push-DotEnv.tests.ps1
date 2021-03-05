@@ -14,6 +14,23 @@ Describe 'Push-DotEnv' {
         }
     }
 
+    Context 'Given that no path is provided' {
+        BeforeAll {
+            Push-Location TestDrive:\
+        }
+        It 'uses the default ".env"' {
+            $env:NEWENV = ''
+            'NEWENV=newenv' | Set-Content TestDrive:\.env
+            $vars = Push-DotEnv -PassThru
+            $env:NEWENV | Should -Be 'newenv'
+            $vars.Keys | Should -Contain 'NEWENV'
+            $vars.NEWENV | Should -BeNullOrEmpty
+        }
+        AfterAll {
+            Pop-Location
+        }
+    }
+
     Context 'Given the -PassThru switch is set' {
         It 'Returns the value of envvars that did not previously exist' {
             $env:NEWENV = ''
@@ -117,6 +134,44 @@ Describe 'Push-DotEnv' {
             $original = Push-DotEnv -Environment 'prod' -AllowClobber -PassThru
             $env:ENVIRONMENT | Should -Be 'prod'
             $original.ENVIRONMENT | Should -Be 'previous'
+        }
+        AfterAll {
+            Pop-Location
+        }
+    }
+
+    Context 'Given a -Name and an -Environment' {
+        BeforeAll {
+            Push-Location TestDrive:\
+            'ENVIRONMENT=default' | Set-Content TestDrive:\test.env
+            'ENVIRONMENT=prod' | Set-Content TestDrive:\test.env.prod
+        }
+        It 'searches for the right file and gives precedence to environment-specific .env files (e.g. test.env.prod)' {
+            Push-DotEnv -Name test -Environment 'prod'
+            $env:ENVIRONMENT | Should -Be 'prod'
+        }
+        It 'searches for the right files when searching "-Up"' {
+            New-Item "subdir" -ItemType Directory
+            Push-Location "subdir"
+
+            Push-DotEnv -Name test -Environment 'prod'
+            $env:ENVIRONMENT | Should -Be 'prod'
+        }
+        AfterAll {
+            Pop-Location
+        }
+    }
+
+    Context 'Given a -Name and an -Environment with env files in a parent directory' {
+        BeforeAll {
+            'ENVIRONMENT=default' | Set-Content TestDrive:\test.env
+            'ENVIRONMENT=prod' | Set-Content TestDrive:\test.env.prod
+            New-Item "TestDrive:\subdir" -ItemType Directory
+            Push-Location "TestDrive:\subdir"
+        }
+        It 'searches for the right files when searching "-Up" and give precedence to environment specific file in the same folder' {
+            Push-DotEnv -Name test -Environment 'prod' -Up
+            $env:ENVIRONMENT | Should -Be 'prod'
         }
         AfterAll {
             Pop-Location
