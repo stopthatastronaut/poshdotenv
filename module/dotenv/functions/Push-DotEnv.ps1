@@ -51,40 +51,44 @@
   Pop-DotEnv
 #>
 function Push-DotEnv {
-    [CmdletBinding(SupportsShouldProcess, DefaultParameterSetName = 'Environment')]
+    [CmdletBinding(SupportsShouldProcess, DefaultParameterSetName = 'Name')]
     [OutputType([Hashtable])]
     param(
-        [Parameter(ParameterSetName = 'Path', Position = 1)]
+        [Parameter(Mandatory, ParameterSetName = 'Path', Position = 0)]
         [string]$Path,
-        [Parameter(ParameterSetName = 'Environment')]
+        [Parameter(ParameterSetName = 'Name', Position = 0)]
+        [string]$Name = '.env',
+        [Parameter(ParameterSetName = 'Name', Position = 1)]
         [string]$Environment,
-        [Parameter(ParameterSetName = 'Environment')]
+        [Parameter(ParameterSetName = 'Name')]
         [switch]$Up,
         [switch]$AllowClobber,
         [switch]$PassThru
     )
 
-    if ($PSCmdlet.ParameterSetName -eq 'Environment') {
+    if ($PSCmdlet.ParameterSetName -eq 'Name') {
+        $pattern = "(^$([regex]::Escape($Name))$)|(^$([regex]::Escape("$Name.$Environment"))$)"
+
         $searchDir = Get-Item (Get-Location)
-        $pattern = "(^\.env$)|(^\.env\.$Environment$)"
         do {
-            Write-Verbose "looking in $searchDir..."
+            Write-Verbose "looking in $($searchDir.FullName)..."
             $envfiles = @(Get-ChildItem $searchDir.FullName -File | Where-Object { $_.Name -match $pattern }) | Sort-Object
             $searchDir = $searchDir.Parent
         } while ($envfiles.Count -eq 0 -and $searchDir -and $Up)
         "Found $($envfiles.Count) .env files:" | Write-Verbose
-        $envfiles.FullName | Write-Verbose
-
+        $envfiles | Write-Verbose
     }
     else {
         $envfiles = Resolve-Path $Path
     }
 
+    if (-not $envfiles) { return }
+
     $newEnv = @{}
     foreach ($file in $envfiles) {
         Write-Debug "processing file: $file"
 
-        foreach ($line in Get-Content $file) {
+        foreach ($line in $file | Get-Content) {
             $line = $line.Trim()
 
             if ($line -eq '' -or $line -like '#*') {
