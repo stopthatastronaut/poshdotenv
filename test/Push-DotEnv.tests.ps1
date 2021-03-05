@@ -154,7 +154,7 @@ Describe 'Push-DotEnv' {
             New-Item "subdir" -ItemType Directory
             Push-Location "subdir"
 
-            Push-DotEnv -Name test -Environment 'prod'
+            Push-DotEnv -Name test.env -Environment 'prod'
             $env:ENVIRONMENT | Should -Be 'prod'
         }
         AfterAll {
@@ -170,7 +170,7 @@ Describe 'Push-DotEnv' {
             Push-Location "TestDrive:\subdir"
         }
         It 'searches for the right files when searching "-Up" and give precedence to environment specific file in the same folder' {
-            Push-DotEnv -Name test -Environment 'prod' -Up
+            Push-DotEnv -Name test.env -Environment 'prod' -Up
             $env:ENVIRONMENT | Should -Be 'prod'
         }
         AfterAll {
