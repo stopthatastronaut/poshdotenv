@@ -140,6 +140,21 @@ Describe 'Push-DotEnv' {
         }
     }
 
+    Context 'Given a -Name and an empty -Environment' {
+        BeforeAll {
+            Push-Location TestDrive:\
+            'ENVIRONMENT=default' | Set-Content TestDrive:\test.env
+            'ENVIRONMENT=empty' | Set-Content TestDrive:\test.env.
+        }
+        It 'only reads the named file and no other env file (e.g. only "test.env" and not "test.env.")' {
+            Push-DotEnv -Name test.env -Environment ''
+            $env:ENVIRONMENT | Should -Be 'default'
+        }
+        AfterAll {
+            Pop-Location
+        }
+    }
+
     Context 'Given a -Name and an -Environment' {
         BeforeAll {
             Push-Location TestDrive:\
