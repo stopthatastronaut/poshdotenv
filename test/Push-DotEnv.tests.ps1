@@ -140,7 +140,8 @@ Describe 'Push-DotEnv' {
         }
     }
 
-    Context 'Given a -Name and an empty -Environment' {
+    # TODO Cannot create a file with trailing dot. Second Set-Content overwrites first test.env
+    Context 'Given a -Name and an empty -Environment (skippped because test.env. cannot be created)' -Skip {
         BeforeAll {
             Push-Location TestDrive:\
             'ENVIRONMENT=default' | Set-Content TestDrive:\test.env
@@ -148,21 +149,6 @@ Describe 'Push-DotEnv' {
         }
         It 'only reads the named file and no other env file (e.g. only "test.env" and not "test.env.")' {
             Push-DotEnv -Name test.env -Environment ''
-            $env:ENVIRONMENT | Should -Be 'default'
-        }
-        AfterAll {
-            Pop-Location
-        }
-    }
-
-    Context 'Given a -Name and an "$null" for -Environment' {
-        BeforeAll {
-            Push-Location TestDrive:\
-            'ENVIRONMENT=default' | Set-Content TestDrive:\test.env
-            'ENVIRONMENT=empty' | Set-Content TestDrive:\test.env.
-        }
-        It 'only reads the named file and no other env file (e.g. only "test.env" and not "test.env.")' {
-            Push-DotEnv -Name test.env -Environment $null
             $env:ENVIRONMENT | Should -Be 'default'
         }
         AfterAll {

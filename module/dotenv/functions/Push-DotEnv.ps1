@@ -67,7 +67,8 @@ function Push-DotEnv {
     )
 
     if ($PSCmdlet.ParameterSetName -eq 'Name') {
-        $pattern = "(^$([regex]::Escape($Name))$)|(^$([regex]::Escape("$Name.$Environment"))$)"
+        $pattern = "(^$([regex]::Escape($Name))$)"
+        if ($Environment) { $pattern += "|(^$([regex]::Escape("$Name.$Environment"))$)" }
 
         $searchDir = Get-Item (Get-Location)
         do {
