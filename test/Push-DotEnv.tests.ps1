@@ -147,13 +147,6 @@ Describe 'Push-DotEnv' {
             'ENVIRONMENT=prod' | Set-Content TestDrive:\test.env.prod
         }
         It 'searches for the right file and gives precedence to environment-specific .env files (e.g. test.env.prod)' {
-            Push-DotEnv -Name test -Environment 'prod'
-            $env:ENVIRONMENT | Should -Be 'prod'
-        }
-        It 'searches for the right files when searching "-Up"' {
-            New-Item "subdir" -ItemType Directory
-            Push-Location "subdir"
-
             Push-DotEnv -Name test.env -Environment 'prod'
             $env:ENVIRONMENT | Should -Be 'prod'
         }
