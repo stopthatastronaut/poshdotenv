@@ -11,6 +11,7 @@ jobs:
           command: |
             $PSVersionTable
             Install-Module pester -force
+            Install-Module PSScriptAalyzer -force
             Invoke-Pester -EnableExit
   testlinux:
     executor: mcr.microsoft.com/powershell:latest
@@ -23,6 +24,7 @@ jobs:
           command: |
             $PSVersionTable
             Install-Module pester -force
+            Install-Module PSScriptAalyzer -force
             Invoke-Pester -EnableExit
   deploy:
     executor: windows-tools/default
