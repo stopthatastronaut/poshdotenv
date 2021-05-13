@@ -1,6 +1,6 @@
 version: 2.1
 jobs:
-  test:
+  testwindows:
     executor: windows-tools/default
     steps:
       - checkout
@@ -12,15 +12,41 @@ jobs:
             $PSVersionTable
             Install-Module pester -force
             Invoke-Pester -EnableExit
+  testlinux:
+    executor: mcr.microsoft.com/powershell:latest
+    steps:
+      - checkout
+      - run: systeminfo
+      - run:
+          name: "Invoke-Pester"
+          shell: pwsh
+          command: |
+            $PSVersionTable
+            Install-Module pester -force
+            Invoke-Pester -EnableExit
+  deploy:
+    executor: windows-tools/default
+    steps:
+      - checkout
+      - run:
+          name: "Deploy to gallery"
+          shell: powershell.exe -ExecutionPolicy Bypass
+          command: |
+            $PSVersionTable
+            # TO BE COMPLETED
 workflows:
   version: 2
   pipeline:
     jobs:
-      - test:
+      - testwindows:
           filters:
             tags:
               only: /.*/
             branches:
               only: /.*/
+      - deploy:
+          filters:
+            branches:
+              only: /.master/
 orbs:
   windows-tools: circleci/windows@2.2.0

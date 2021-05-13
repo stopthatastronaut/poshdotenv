@@ -6,7 +6,7 @@ Copy-Item $here/.env ./.env -force -verbose
 # Import-Module ./module/dotenv/dotenv.psm1
 
 Describe "Syntax and linting" {
-    Context "PSSCriptAnalyzer" {
+    Context "PSScriptAnalyzer" {
         It "Should have Zero script analyzer issues" {
             Invoke-ScriptAnalyzer ./ -Recurse -ReportSummary | Measure-Object | Select-Object -ExpandProperty Count | Should -be 0
         }
@@ -14,7 +14,6 @@ Describe "Syntax and linting" {
 }
 
 Describe "The module's functionality" {
-
 
     Context "Doing a returnvars" {
         It "Finds the value of APP_ENV, which is 'staging'" {
