@@ -10,21 +10,21 @@ jobs:
           shell: powershell.exe -ExecutionPolicy Bypass
           command: |
             $PSVersionTable
-            Install-Module pester -force
-            Install-Module PSScriptAnalyzer -force
+            Install-Module pester -force -verbose -requiredversion '5.2.0'
+            Install-Module PSScriptAnalyzer -force -verbose
             Invoke-Pester -EnableExit
   testlinux:
-    executor: mcr.microsoft.com/powershell:latest
+    docker:
+      - image: mcr.microsoft.com/powershell:latest
     steps:
       - checkout
-      - run: systeminfo
       - run:
           name: "Invoke-Pester"
           shell: pwsh
           command: |
             $PSVersionTable
-            Install-Module pester -force
-            Install-Module PSScriptAnalyzer -force
+            Install-Module Pester -force -verbose -requiredversion '5.2.0'
+            Install-Module PSScriptAnalyzer -force -verbose
             Invoke-Pester -EnableExit
   deploy:
     executor: windows-tools/default
@@ -41,6 +41,12 @@ workflows:
   pipeline:
     jobs:
       - testwindows:
+          filters:
+            tags:
+              only: /.*/
+            branches:
+              only: /.*/
+      - testlinux:
           filters:
             tags:
               only: /.*/
