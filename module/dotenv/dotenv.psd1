@@ -32,6 +32,8 @@
     # Description of the functionality provided by this module
     Description       = 'Allows PowerShell to load Environment Variables from a .env file, similarly to node or docker.'
 
+    PSEdition         = @('Desk', 'Core')
+
     # Minimum version of the PowerShell engine required by this module
     # PowerShellVersion = ''
 

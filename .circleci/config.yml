@@ -1,6 +1,6 @@
 version: 2.1
 jobs:
-  test:
+  testwindows:
     executor: windows-tools/default
     steps:
       - checkout
@@ -10,17 +10,64 @@ jobs:
           shell: powershell.exe -ExecutionPolicy Bypass
           command: |
             $PSVersionTable
-            Install-Module pester -force
-            Invoke-Pester -EnableExit
+            Install-Module pester -force -verbose -requiredversion '5.2.0'
+            Install-Module PSScriptAnalyzer -force -verbose
+            Invoke-Pester -CI -Output Detailed
+  testlinux:
+    docker:
+      - image: mcr.microsoft.com/powershell:latest
+    steps:
+      - checkout
+      - run:
+          name: "Invoke-Pester"
+          shell: pwsh
+          command: |
+            $PSVersionTable
+            Install-Module Pester -force -verbose -requiredversion '5.2.0'
+            Install-Module PSScriptAnalyzer -force -verbose
+            Invoke-Pester -CI -Output Detailed
+  deploy:
+    executor: windows-tools/default
+    steps:
+      - checkout
+      - run:
+          name: "Deploy to gallery"
+          shell: powershell.exe -ExecutionPolicy Bypass
+          command: |
+            $PSVersionTable
+            Write-Output "Publishing the DotEnv Module..."
+            # push a version number into the manifest
+
+            $manifest = Get-Content "./Module/DotEnv/dotenv.psd1" -raw
+            $mver = "0.1.$CIRCLE_BUILD_NUM"
+            $manifest.replace("'0.1.0'", "'$mver'") | Out-File "./Module/DotEnv/dotenv.psd1" -Force
+
+            Publish-Module -Path "./Module/DotEnv" -NuGetApiKey $NuGetApiKey -Verbose -force $psgalleryapikey
+
+            git config --global user.email "stopthatastronaut@gmail.com"
+            git config --global user.name "CircleCI Build Tagger"
+
+            git tag -a "$mver" -m "Version $mver release"
+            git push --tags
 workflows:
   version: 2
   pipeline:
     jobs:
-      - test:
+      - testwindows:
           filters:
             tags:
               only: /.*/
             branches:
               only: /.*/
+      - testlinux:
+          filters:
+            tags:
+              only: /.*/
+            branches:
+              only: /.*/
+      - deploy:
+          filters:
+            branches:
+              only: /.master/
 orbs:
   windows-tools: circleci/windows@2.2.0
