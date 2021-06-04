@@ -173,10 +173,10 @@ Describe 'Push-DotEnv' {
 
     Context 'Given a -Name and an -Environment with env files in a parent directory' {
         BeforeAll {
-            'ENVIRONMENT=default' | Set-Content TestDrive:\test.env
-            'ENVIRONMENT=prod' | Set-Content TestDrive:\test.env.prod
-            New-Item "TestDrive:\subdir" -ItemType Directory
-            Push-Location "TestDrive:\subdir"
+            'ENVIRONMENT=default' | Set-Content TestDrive:/test.env
+            'ENVIRONMENT=prod' | Set-Content TestDrive:/test.env.prod
+            New-Item "TestDrive:/subdir" -ItemType Directory
+            Push-Location "TestDrive:/subdir"
         }
         It 'searches for the right files when searching "-Up" and give precedence to environment specific file in the same folder' {
             Push-DotEnv -Name test.env -Environment 'prod' -Up

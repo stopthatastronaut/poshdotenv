@@ -114,11 +114,14 @@ function Push-DotEnv {
         DOTENV_PREVIOUS = $env:DOTENV_PREVIOUS
     }
     foreach ($item in $newEnv.GetEnumerator()) {
-        if ( -not (Test-Path "Env:/$($item.Name)") -or $AllowClobber ) {
+        if ( (Test-Path "Env:/$($item.Name)") -eq $false -or $AllowClobber -eq $true ) {
             if ($PSCmdlet.ShouldProcess("`$env:$($item.Name)", "Set value to '$($item.Value)'")) {
-                $previousValues[$item.Name] = Get-Item "Env:/$($item.Name)" | Select-Object -expand Value
-                # [System.Environment]::GetEnvironmentVariable($item.Name)
-                # [System.Environment]::SetEnvironmentVariable($item.Name, $item.Value)
+                $previousValues[$item.Name] = if (Test-Path "Env:/$($item.Name)") {
+                    Get-Item "Env:/$($item.Name)" | Select-Object -expand Value
+                }
+                else {
+                    ""
+                }
                 Set-Item -Path "Env:/$($item.Name)" -Value $item.Value
             }
         }
