@@ -66,8 +66,11 @@ workflows:
             branches:
               only: /.*/
       - deploy:
+          requires:
+            - testlinux
+            - testwindows
           filters:
             branches:
-              only: /.master/
+              only: master
 orbs:
   windows-tools: circleci/windows@2.2.0
