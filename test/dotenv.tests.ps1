@@ -8,7 +8,7 @@ Copy-Item $here/.env ./.env -force -verbose
 Describe "Syntax and linting" {
     Context "PSScriptAnalyzer" {
         It "Should have Zero script analyzer issues" {
-            Invoke-ScriptAnalyzer ./ -Recurse -ReportSummary | Measure-Object | Select-Object -ExpandProperty Count | Should -be 0
+            Invoke-ScriptAnalyzer ./ -Recurse -ReportSummary | Measure-Object | Select-Object -ExpandProperty Count | Should -Be 0
         }
     }
 }

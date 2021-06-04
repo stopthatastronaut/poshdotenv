@@ -12,7 +12,7 @@ jobs:
             $PSVersionTable
             Install-Module pester -force -verbose -requiredversion '5.2.0'
             Install-Module PSScriptAnalyzer -force -verbose
-            Invoke-Pester -EnableExit
+            Invoke-Pester -CI -Output Detailed
   testlinux:
     docker:
       - image: mcr.microsoft.com/powershell:latest
@@ -25,7 +25,7 @@ jobs:
             $PSVersionTable
             Install-Module Pester -force -verbose -requiredversion '5.2.0'
             Install-Module PSScriptAnalyzer -force -verbose
-            Invoke-Pester -EnableExit
+            Invoke-Pester -CI -Output Detailed
   deploy:
     executor: windows-tools/default
     steps:

@@ -13,6 +13,8 @@ Function Set-DotEnv {
     $dotenv_added_vars = @() # a special var that tells us what we added
     $linecursor = 0
 
+    if ($recurse) {}   #NYI
+
     $content = Get-Content $path -ErrorAction SilentlyContinue # if i doesn't exist, forget it
 
     $content | ForEach-Object { # go through line by line
