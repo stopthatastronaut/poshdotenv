@@ -27,19 +27,18 @@ If you want to keep several .env files alongside your repo, you can use the path
 
 ```powershell
 Import-Module dotenv
-Set-DotEnv -path ./env.staging
+Set-DotEnv -Path ./env.staging
 # code here
 Remove-DotEnv
 ```
 
 ### Escaping
 
-This module can handle values with an extra '=' in them, and can handle quoted strings (single and double). For more complex scenarioes, it may be advisable to base64 encode the values, and then decode as they're needed.
+This module can handle values with an extra '=' in them, and can handle quoted strings (single and double). For more complex scenarios, it may be advisable to base64 encode the values, and then decode as they're needed.
 
 ## Coming Soon
 
 - Allow append and prepend with `:=`/`=:` syntax
-- Recurse support (parameter currently non-functional)
 - Extra testing, especially around injection of 'bad' vars, because we're dealing with possible third-party input here
 
 ## Contributing
