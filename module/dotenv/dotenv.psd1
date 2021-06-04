@@ -9,7 +9,7 @@
 @{
 
     # Script module or binary module file associated with this manifest.
-    RootModule = 'dotenv.psm1'
+    RootModule        = 'dotenv.psm1'
 
     # Version number of this module.
     ModuleVersion     = '0.1.0'
@@ -54,8 +54,6 @@
 
     # Modules that must be imported into the global environment prior to importing this module
     # RequiredModules = @()
-
-    RootModule        = "./dotenv.psm1"
 
     # Assemblies that must be loaded prior to importing this module
     # RequiredAssemblies = @()
