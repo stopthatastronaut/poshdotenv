@@ -73,7 +73,7 @@ function Push-DotEnv {
         $searchDir = Get-Item (Get-Location)
         do {
             Write-Verbose "looking in $($searchDir.FullName)..."
-            $envfiles = @(Get-ChildItem $searchDir.FullName -File | Where-Object { $_.Name -match $pattern }) | Sort-Object
+            $envfiles = @(Get-ChildItem $searchDir.FullName -File -Hidden | Where-Object { $_.Name -match $pattern }) | Sort-Object
             $searchDir = $searchDir.Parent
         } while ($envfiles.Count -eq 0 -and $searchDir -and $Up)
         "Found $($envfiles.Count) .env files:" | Write-Verbose
@@ -114,10 +114,12 @@ function Push-DotEnv {
         DOTENV_PREVIOUS = $env:DOTENV_PREVIOUS
     }
     foreach ($item in $newEnv.GetEnumerator()) {
-        if ( -not (Test-Path "Env:\$($item.Name)") -or $AllowClobber ) {
+        if ( -not (Test-Path "Env:/$($item.Name)") -or $AllowClobber ) {
             if ($PSCmdlet.ShouldProcess("`$env:$($item.Name)", "Set value to '$($item.Value)'")) {
-                $previousValues[$item.Name] = [System.Environment]::GetEnvironmentVariable($item.Name)
-                [System.Environment]::SetEnvironmentVariable($item.Name, $item.Value)
+                $previousValues[$item.Name] = Get-Item "Env:/$($item.Name)" | Select-Object -expand Value
+                # [System.Environment]::GetEnvironmentVariable($item.Name)
+                # [System.Environment]::SetEnvironmentVariable($item.Name, $item.Value)
+                Set-Item -Path "Env:/$($item.Name)" -Value $item.Value
             }
         }
     }
