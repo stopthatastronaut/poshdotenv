@@ -44,3 +44,5 @@ This module can handle values with an extra '=' in them, and can handle quoted s
 ## Contributing
 
 Contribs welcome, please put in a PR and notify @cloudyopspoet on Twitter that you've done it, as notifications don't always make it through from github.
+
+[![CircleCI](https://circleci.com/gh/stopthatastronaut/poshdotenv.svg?style=svg)](https://circleci.com/gh/stopthatastronaut)
