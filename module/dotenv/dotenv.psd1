@@ -15,7 +15,7 @@
     ModuleVersion     = '0.4.0'
 
     # Supported PSEditions
-    # CompatiblePSEditions = @()
+    CompatiblePSEditions = @('Desktop', 'Core')
 
     # ID used to uniquely identify this module
     GUID              = '13477ff4-551b-48e8-895a-c03e6f826749'
@@ -31,8 +31,6 @@
 
     # Description of the functionality provided by this module
     Description       = 'Allows PowerShell to load Environment Variables from a .env file, similarly to node or docker.'
-
-    PSEdition         = @('Desk', 'Core')
 
     # Minimum version of the PowerShell engine required by this module
     # PowerShellVersion = ''
